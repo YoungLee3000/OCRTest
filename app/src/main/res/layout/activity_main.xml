@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+
+
+    <!--
+        查询模块，处在同一水平位置，包括输入框与按钮
+    -->
+
+    <TextView
+        android:id="@+id/text_tips"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="用PDA扫描网证二维码后在下方会自动显示地址列表"
+        android:layout_marginTop="40dp"
+        android:textSize="22sp"/>
+
+    <EditText
+        android:id="@+id/edit_userID"
+        app:layout_constraintHorizontal_weight="7"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:background="@drawable/bg_edit_text"
+        android:hint="输入二维码数据"
+        android:layout_below="@id/text_tips"
+        android:visibility="gone"/>
+
+    <Button
+        android:id="@+id/btn_query"
+        android:background="@drawable/set_btn"
+        android:text="查询"
+        android:textSize="22sp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginRight="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/edit_userID"
+        android:visibility="gone"/>
+
+
+    <Button
+        android:id="@+id/btn_clear"
+        android:background="@drawable/set_btn"
+        android:text="清除"
+        android:textSize="22sp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginRight="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/btn_query"
+        android:visibility="gone"/>
+
+
+    <View
+        android:id="@+id/text_line"
+        android:background="@color/gray"
+        android:layout_marginTop="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@id/btn_clear"
+        />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_address"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/text_line"
+        android:scrollbars="vertical"/>
+
+    <View
+        android:id="@+id/v_line_bottom"
+        android:layout_width="match_parent"
+        android:layout_height="10dp"
+        android:layout_marginBottom="10dp"
+        android:layout_below="@id/rv_address"/>
+
+
+
+</RelativeLayout>
