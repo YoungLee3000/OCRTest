@@ -12,6 +12,9 @@ import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -37,9 +40,13 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.nlscan.ocrtest.util.BitMapUtil;
 import com.nlscan.ocrtest.util.Constants;
 import com.nlscan.ocrtest.util.PostUtil;
+
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -56,8 +63,8 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
 
     //界面信息
-    private Button mTakePhoto, mGenCert;
-    private TextView  mTVTip;
+    private Button mTakePhoto, mGenCert,mShowWords;
+    private TextView  mTVTip,mWords;
     private ImageView mPicture;
     private static final String PERMISSION_WRITE_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE;
     private static final int REQUEST_PERMISSION_CODE = 267;
@@ -65,22 +72,12 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
     private static final int CHOOSE_PHOTO = 385;
     private static final int REQ_CROP = 873;
     private static final String FILE_PROVIDER_AUTHORITY = "com.nlscan.ocrtest.provider";
-    private Uri mImageUri, mImageUriFromFile;
-    private Uri mSmallUri;
-    private File imageFile;
+    private Uri mImageUri; //用来存储拍照图片的URI
+    private Uri mSmallUri; //裁剪图片的URI
 
-    //从主界面传来的信息
-//    private boolean mIfDanger = false;
-//    private String mTextHead;
-//    private String mTextContain;
-//    private String mUserId;
-//
-//    private String reName,rePhone,reAddress,seName,sePhone,seAddress,goodType,goodWeight,goodCode;
+    private String mFileStr = "";//裁剪后的图片路径
 
-    //上传信息
-//    private String uploadUrl = "http://www.gutejersy.com/android/getFile.php";
-//    private String dataUrl = "http://www.gutejersy.com/android/getPath.php";
-//    private boolean mIfJson = false;
+
 
     private String uploadUrl = "http://47.103.30.171:12000/ocr";
     private String dataUrl = "http://www.nlsmall.com/emsExpress/support.do?uploadPackage";
@@ -90,18 +87,11 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 //    private String dataUrl = "http://192.168.74.131:8080/emsExpress/support.do?uploadPackage";
 //
     private boolean mIfJson = true;
+    private boolean gIfImage = false; //是否选了照片
 
-
-    private boolean gIfImage = false;
-    private String mFileStr = "";
-    private  String mServerFileStr = "";
 
     private String mCorrectResult = "0";
 
-
-    //下载信息
-    private String mDownloadStr = "";
-    private String mCertStr = "";
 
     //底部弹出框按钮
     private View bInflate;
@@ -139,6 +129,7 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
             switch (msg.what) {
                 case CHANGE_SUCCESS:
                     verifyActivity.cancelDialog();
+                    verifyActivity.showResult(str);
                     break;
                 case CHANGE_PROCESS:
                     verifyActivity.showLoadingWindow("数据查询中");
@@ -163,21 +154,6 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
 
 
-
-//        reName = getIntent().getStringExtra(Constants.RE_NAME);
-//        rePhone = getIntent().getStringExtra(Constants.RE_PHONE);
-//        reAddress = getIntent().getStringExtra(Constants.RE_ADDRESS);
-//
-//        seName = getIntent().getStringExtra(Constants.SE_NAME);
-//        seAddress = getIntent().getStringExtra(Constants.SE_ADDRESS);
-//        sePhone = getIntent().getStringExtra(Constants.SE_PHONE);
-//
-//        goodCode = getIntent().getStringExtra(Constants.SE_CODE);
-//        goodType = getIntent().getStringExtra(Constants.SE_TYPE);
-//        goodWeight = getIntent().getStringExtra(Constants.SE_WEIGHT) ;
-//
-//        mIfDanger = "高危物品".equals(goodType);
-
         /*申请读取存储的权限*/
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Log.d(Constants.TAG,"version larger than 23");
@@ -190,10 +166,9 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
         mPicture = (ImageView) findViewById(R.id.iv_picture);
         mTakePhoto = (Button) findViewById(R.id.bt_take_photo);
         mGenCert = (Button) findViewById(R.id.bt_gen_cert);
+        mShowWords = (Button)findViewById(R.id.bt_show_word);
         mTVTip = (TextView) findViewById(R.id.text_tips);
-
-
-
+        mWords = (TextView) findViewById(R.id.text_words);
 
 
 
@@ -204,11 +179,29 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
             }
         });
 
+
+        mShowWords.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                boolean ifShow = mWords.getVisibility() == View.GONE ;
+                if (ifShow){
+                    mShowWords.setText("关闭文字");
+                    mWords.setVisibility(View.VISIBLE);
+                }
+                else{
+                    mShowWords.setText("显示文字");
+                    mWords.setVisibility(View.GONE);
+                }
+
+
+            }
+        });
+
         mGenCert.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-
+                mWords.setText("");
                 showLoadingWindow("上传数据中");
                 new Thread()
                 {
@@ -242,9 +235,8 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
                                 break;
                             }
                             else{
-                                toastMegStep1.obj = "上传图片成功";
+                                toastMegStep1.obj = response1;
                                 toastMegStep1.what = CHANGE_SUCCESS;
-                                mServerFileStr = PostUtil.parseJsonResult(response1,"serverPath");
                                 myHandler.sendMessage(toastMegStep1);
                             }
 
@@ -264,6 +256,88 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
         });
 
     }
+
+
+    /**
+     * 解析返回的json字符串
+     * @param objStr
+     */
+    private void showResult(String objStr){
+
+        mShowWords.setEnabled(true);
+
+        Bitmap bitmap = null;
+        try {
+            bitmap = BitmapFactory.decodeStream(
+                    getContentResolver().openInputStream(mSmallUri));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        String data = PostUtil.parseJsonResult(objStr,"data");
+        String item = PostUtil.parseJsonResult(data,"items");
+        JSONArray relArray = JSON.parseArray(item);
+
+        if (relArray != null && relArray.size()>0){
+
+            int size = relArray.size();
+            String[] words = new String[size];
+            int [][] rects = new int[size][4];
+
+            for (int i=0; i<size; i++){
+                JSONObject relObj = (JSONObject) relArray.get(i);
+                words[i] = relObj.getString("itemstring");
+                JSONObject coord = (JSONObject) relObj.getJSONObject("itemcoord");
+                rects[i][0] = coord.getInteger("x");
+                rects[i][1] = coord.getInteger("y");
+                rects[i][2] = rects[i][0] +  coord.getInteger("width");
+                rects[i][3] = rects[i][1] + coord.getInteger("height");
+
+                mWords.append(""+(i+1) + ": " + words[i] + "\n");
+
+            }
+            if (bitmap != null)
+                drawRectangles(bitmap,rects);
+
+
+        }
+
+
+
+
+
+    }
+
+
+    //绘制方框
+    private void drawRectangles(Bitmap imageBitmap, int[][] keywordRects) {
+        int left, top, right, bottom;
+        Bitmap mutableBitmap = imageBitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Canvas canvas = new Canvas(mutableBitmap);
+        Paint paint = new Paint();
+        paint.setColor(Color.RED);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(1);
+
+        Paint paint2 = new Paint();
+        paint2.setColor(Color.RED);
+        paint2.setStyle(Paint.Style.FILL);
+        paint2.setStrokeWidth(0.5f);
+
+        int size = keywordRects.length;
+
+        for (int i = 0; i < size; i++) {
+            left = keywordRects[i][0];
+            top = keywordRects[i][1];
+            right = keywordRects[i][2];
+            bottom = keywordRects[i][3];
+
+            canvas.drawRect(left, top, right, bottom, paint);
+            canvas.drawText(""+(i+1),left-10,top+10,paint2);
+        }
+        mPicture.setImageBitmap(mutableBitmap);//img: 定义在xml布局中的ImagView控件
+    }
+
 
 
     /**
@@ -291,16 +365,6 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
     }
 
 
-
-    /**
-     * 跳转到网证显示页面
-     */
-    protected void jumpToShow(){
-        Intent intent = new Intent(PostFigureActivity.this,QRCodeActivity.class);
-        intent.putExtra("certificate",mCertStr);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
-        startActivity(intent);
-    }
 
 
     /**
@@ -424,9 +488,9 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
     private void takePhoto() {
         Intent takePhotoIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);//打开相机的Intent
         if (takePhotoIntent.resolveActivity(getPackageManager()) != null) {//这句作用是如果没有相机则该应用不会闪退，要是不加这句则当系统没有相机应用的时候该应用会闪退
-            imageFile = createImageFile();//创建用来保存照片的文件
-            mImageUriFromFile = Uri.fromFile(imageFile);
-            Log.i(Constants.TAG, "takePhoto: uriFromFile " + mImageUriFromFile);
+            File imageFile = createImageFile();//创建用来保存照片的文件
+//            mImageUriFromFile = Uri.fromFile(imageFile);
+//            Log.i(Constants.TAG, "takePhoto: uriFromFile " + mImageUriFromFile);
             if (imageFile != null) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     /*7.0以上要通过FileProvider将File转化为Uri*/
@@ -510,6 +574,10 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
     }
 
 
+
+
+
+
     /*缩略图*/
     private void cropAndThumbnail() {
         Intent intent = new Intent("com.android.camera.action.CROP");
@@ -533,7 +601,8 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
     private File createImageFile() {
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+//        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        File storageDir = this.getApplicationContext().getFilesDir();
         File imageFile = null;
         try {
             imageFile = File.createTempFile(imageFileName, ".jpg", storageDir);
@@ -562,17 +631,6 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
         switch (requestCode) {
             case TAKE_PHOTO:
                 if (resultCode != RESULT_OK) return;
-//                if (resultCode == RESULT_OK) {
-//                    try {
-//                        /*如果拍照成功，将Uri用BitmapFactory的decodeStream方法转为Bitmap*/
-//                        Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(mImageUri));
-//                        Log.i(TAG, "onActivityResult: imageUri " + mImageUri);
-//                        galleryAddPic(mImageUriFromFile);
-//                        mPicture.setImageBitmap(bitmap);//显示到ImageView上
-//                    } catch (FileNotFoundException e) {
-//                        e.printStackTrace();
-//                    }
-//                }
 
                 crop();
                 break;
@@ -589,14 +647,6 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
                     mImageUri = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ?
                             FileProvider.getUriForFile(this, FILE_PROVIDER_AUTHORITY, tempFile) :
                             Uri.fromFile(tempFile);
-
-//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-////                        handleImageOnKitKat(data);//4.4之后图片解析
-//                        mImageUri = Uri.fromFile(new File(handleImageOnKitKat(data)));
-//                    } else {
-////                        handleImageBeforeKitKat(data);//4.4之前图片解析
-//                        mImageUri = Uri.fromFile(new File(handleImageBeforeKitKat(data)));
-//                    }
                 }
 //
                 crop();
@@ -608,6 +658,7 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
                         Bitmap bitmap = BitmapFactory.decodeStream(
                                 getContentResolver().openInputStream(mSmallUri));
                         mPicture.setImageBitmap(bitmap);
+                        mShowWords.setEnabled(false);
                     } else {
                         Log.i(Constants.TAG, "onActivityResult: Uri is null");
                     }

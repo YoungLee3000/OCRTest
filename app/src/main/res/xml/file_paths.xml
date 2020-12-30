@@ -5,4 +5,6 @@
         name="my_images"
         path="." />
 
+    <root-path name="root_path" path="."/>
+
 </paths>

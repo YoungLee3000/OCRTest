@@ -3,6 +3,7 @@ package com.nlscan.ocrtest.util;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.os.Environment;
 import android.util.Log;
@@ -11,9 +12,9 @@ import android.widget.Toast;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.nlscan.ocrtest.MailInfo;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -183,49 +184,6 @@ public class PostUtil
     }
 
 
-    /**
-     * 解析json数据数组
-     * @param result
-     * @return
-     */
-    public static List<MailInfo> parseJson(String result)
-    {
-
-//        JSONArray jsonArray = JSON.parseArray(result);
-        //JSONArray jsonArray1 = JSONArray.parseArray(JSON_ARRAY_STR);//因为JSONArray继承了JSON，所以这样也是可以的
-
-        List<MailInfo> mailInfoList = new ArrayList<>();
-
-        try {
-            JSONObject jsonResult = (JSONObject) JSON.parse(result);
-            if ("0000".equals(jsonResult.getString("result"))) {
-                JSONArray jsonArray = JSON.parseArray(jsonResult.getString("sendArray"));
-                for (Object obj : jsonArray) {
-                    JSONObject jsonObject = (JSONObject) obj;
-                    MailInfo mailInfo = new MailInfo();
-                    mailInfo.setReceiverName(jsonObject.getString("receiwer_name"));
-                    mailInfo.setReceiverPhone(jsonObject.getString("receiwer_phone"));
-                    mailInfo.setReceiverAddress(jsonObject.getString("receiwer_adress"));
-                    mailInfo.setSenderName(jsonObject.getString("sender_name"));
-                    mailInfo.setSenderPhone(jsonObject.getString("sender_phone"));
-                    mailInfo.setSenderAddress(jsonObject.getString("sender_adress"));
-                    mailInfo.setSendCode(jsonObject.getString("sendcode"));
-                    mailInfo.setSendType(jsonObject.getString("send_type"));
-                    mailInfo.setSendWeight(jsonObject.getFloat("send_weight") );
-
-                    mailInfoList.add(mailInfo);
-                }
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return mailInfoList;
-    }
-
-
-
 
 
     /**
@@ -343,15 +301,26 @@ public class PostUtil
             fStream.close();
             ds.flush();
             // 获取返回内容
-            InputStream is = conn.getInputStream();
-            int ch;
-            StringBuffer b = new StringBuffer();
-            while ((ch = is.read()) != -1) {
-                b.append((char) ch);
+            BufferedReader is = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream()));
+//            int ch;
+
+            String line;
+            String result = "";
+            while ((line = is.readLine()) != null)
+            {
+                result += "\n" + line;
             }
+
+
+//            StringBuffer b = new StringBuffer();
+//            while ((ch = is.read()) != -1) {
+//                b.append((char) ch);
+//            }
             closeStream(ds);
+            return result;
 //            return "SUCC";
-            return b.toString();
+//            return b.toString();
         } catch (Exception e) {
             e.printStackTrace();
             return "上传失败:" + e.getMessage();

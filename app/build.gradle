@@ -34,5 +34,4 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:3.8.1'
     implementation 'com.alibaba:fastjson:1.2.67'
     implementation 'androidx.recyclerview:recyclerview:1.2.0-alpha01'
-    implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
 }
