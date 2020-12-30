@@ -52,37 +52,37 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class VerifyActivity extends BaseActivity implements View.OnClickListener{
+public class PostFigureActivity extends BaseActivity implements View.OnClickListener{
 
 
     //界面信息
     private Button mTakePhoto, mGenCert;
-    private TextView mTVInfo, mTVTip;
+    private TextView  mTVTip;
     private ImageView mPicture;
     private static final String PERMISSION_WRITE_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE;
     private static final int REQUEST_PERMISSION_CODE = 267;
     private static final int TAKE_PHOTO = 189;
     private static final int CHOOSE_PHOTO = 385;
     private static final int REQ_CROP = 873;
-    private static final String FILE_PROVIDER_AUTHORITY = "com.ly.mailsend.provider";
+    private static final String FILE_PROVIDER_AUTHORITY = "com.nlscan.ocrtest.provider";
     private Uri mImageUri, mImageUriFromFile;
     private Uri mSmallUri;
     private File imageFile;
 
     //从主界面传来的信息
-    private boolean mIfDanger = false;
-    private String mTextHead;
-    private String mTextContain;
-    private String mUserId;
-
-    private String reName,rePhone,reAddress,seName,sePhone,seAddress,goodType,goodWeight,goodCode;
+//    private boolean mIfDanger = false;
+//    private String mTextHead;
+//    private String mTextContain;
+//    private String mUserId;
+//
+//    private String reName,rePhone,reAddress,seName,sePhone,seAddress,goodType,goodWeight,goodCode;
 
     //上传信息
 //    private String uploadUrl = "http://www.gutejersy.com/android/getFile.php";
 //    private String dataUrl = "http://www.gutejersy.com/android/getPath.php";
 //    private boolean mIfJson = false;
 
-    private String uploadUrl = "http://www.nlsmall.com/emsExpress/support.do?upload";
+    private String uploadUrl = "http://47.103.30.171:12000/ocr";
     private String dataUrl = "http://www.nlsmall.com/emsExpress/support.do?uploadPackage";
 
     //本地地址
@@ -96,7 +96,7 @@ public class VerifyActivity extends BaseActivity implements View.OnClickListener
     private String mFileStr = "";
     private  String mServerFileStr = "";
 
-    private String mCorrectResult = "0000";
+    private String mCorrectResult = "0";
 
 
     //下载信息
@@ -126,20 +126,19 @@ public class VerifyActivity extends BaseActivity implements View.OnClickListener
      */
     static class MyHandler extends Handler {
 
-        private SoftReference<VerifyActivity> mySoftReference;
+        private SoftReference<PostFigureActivity> mySoftReference;
 
-        public MyHandler(VerifyActivity verifyActivity) {
+        public MyHandler(PostFigureActivity verifyActivity) {
             this.mySoftReference = new SoftReference<>(verifyActivity);
         }
 
         @Override
         public void handleMessage(Message msg){
-            final VerifyActivity verifyActivity = mySoftReference.get();
+            final PostFigureActivity verifyActivity = mySoftReference.get();
             String str = (String) msg.obj;
             switch (msg.what) {
                 case CHANGE_SUCCESS:
                     verifyActivity.cancelDialog();
-                    verifyActivity.jumpToShow();
                     break;
                 case CHANGE_PROCESS:
                     verifyActivity.showLoadingWindow("数据查询中");
@@ -159,25 +158,25 @@ public class VerifyActivity extends BaseActivity implements View.OnClickListener
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_verify);
+        setContentView(R.layout.activity_post_figure);
         setTitle("信息确认");
 
 
 
 
-        reName = getIntent().getStringExtra(Constants.RE_NAME);
-        rePhone = getIntent().getStringExtra(Constants.RE_PHONE);
-        reAddress = getIntent().getStringExtra(Constants.RE_ADDRESS);
-
-        seName = getIntent().getStringExtra(Constants.SE_NAME);
-        seAddress = getIntent().getStringExtra(Constants.SE_ADDRESS);
-        sePhone = getIntent().getStringExtra(Constants.SE_PHONE);
-
-        goodCode = getIntent().getStringExtra(Constants.SE_CODE);
-        goodType = getIntent().getStringExtra(Constants.SE_TYPE);
-        goodWeight = getIntent().getStringExtra(Constants.SE_WEIGHT) ;
-
-        mIfDanger = "高危物品".equals(goodType);
+//        reName = getIntent().getStringExtra(Constants.RE_NAME);
+//        rePhone = getIntent().getStringExtra(Constants.RE_PHONE);
+//        reAddress = getIntent().getStringExtra(Constants.RE_ADDRESS);
+//
+//        seName = getIntent().getStringExtra(Constants.SE_NAME);
+//        seAddress = getIntent().getStringExtra(Constants.SE_ADDRESS);
+//        sePhone = getIntent().getStringExtra(Constants.SE_PHONE);
+//
+//        goodCode = getIntent().getStringExtra(Constants.SE_CODE);
+//        goodType = getIntent().getStringExtra(Constants.SE_TYPE);
+//        goodWeight = getIntent().getStringExtra(Constants.SE_WEIGHT) ;
+//
+//        mIfDanger = "高危物品".equals(goodType);
 
         /*申请读取存储的权限*/
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -191,22 +190,12 @@ public class VerifyActivity extends BaseActivity implements View.OnClickListener
         mPicture = (ImageView) findViewById(R.id.iv_picture);
         mTakePhoto = (Button) findViewById(R.id.bt_take_photo);
         mGenCert = (Button) findViewById(R.id.bt_gen_cert);
-        mTVInfo  = (TextView) findViewById(R.id.text_info);
         mTVTip = (TextView) findViewById(R.id.text_tips);
 
-        if (mIfDanger){
-            mTVTip.setText("邮寄高危物品，请确认信息后点击\"拍照\"保存图片，然后点击\"寄件码生成\"按钮获取寄件码");
-        }
-        else {
-            mTakePhoto.setVisibility(View.GONE);
-            mTVTip.setText("非高危物品，确认信息后直接点击按钮生成寄件码");
-        }
 
 
-        final String textTotal = " 收件人信息 \n" + "   " +  reName + " " + rePhone + "\n" + reAddress + "\n" +
-                                " 寄件人信息 \n" +  "   " +seName + " " + sePhone + "\n" + seAddress + "\n" +
-                                " 其它信息 \n" + "   " + goodType + " " + goodWeight + "kg" + "\n" + "单号:" +goodCode  ;
-        mTVInfo.setText(textTotal);
+
+
 
         mTakePhoto.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -234,91 +223,32 @@ public class VerifyActivity extends BaseActivity implements View.OnClickListener
                             String[] strArray = mFileStr.split("/");
                             String fileName = strArray[strArray.length -1];
 
-                            if (mIfDanger){
-                                if ("".equals(mFileStr)){
+
+                            if ("".equals(mFileStr)){
                                     toastMegStep1.obj = "图片未选择";
                                     toastMegStep1.what = CHANGE_TOAST;
                                     myHandler.sendMessage(toastMegStep1);
                                     break;
-                                }
-                                //压缩图片
-                                String newFileStr = BitMapUtil.compressImage(mFileStr);
-                                String response1 = PostUtil.upload(uploadUrl,newFileStr);
-                                String uploadResult =  PostUtil.parseJsonResult(response1,"result");
-                                if ( ! mCorrectResult.equals(uploadResult) ){
-                                    toastMegStep1.obj = "上传图片失败,请检查网络";
-                                    toastMegStep1.what = CHANGE_TOAST;
-                                    myHandler.sendMessage(toastMegStep1);
-                                    break;
-                                }
-                                else{
-                                    toastMegStep1.obj = "上传图片成功，开始上传揽件信息";
-                                    toastMegStep1.what = CHANGE_MEDIUM;
-                                    mServerFileStr = PostUtil.parseJsonResult(response1,"serverPath");
-                                    myHandler.sendMessage(toastMegStep1);
-                                }
-
                             }
-
-
-                            //上传揽件信息
-                            Message toastMegStep2 = Message.obtain();
-                            Map<String,String> map = new HashMap<>();
-                            Date d1 = new Date(System.currentTimeMillis());
-                            DateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
-                            map.put("optime",df.format(d1));
-                            map.put("sendcode",goodCode);
-                            map.put("sender_name",seName);
-                            map.put("sender_phone",sePhone);
-                            map.put("sender_adress",seAddress);
-                            map.put("receiwer_name",reName);
-                            map.put("receiwer_phone",rePhone);
-                            map.put("receiwer_adress",reAddress);
-                            map.put("send_type",goodType);
-                            map.put("send_weight",goodWeight);
-                            map.put("sender_photo",mServerFileStr);
-
-                            String response2 = PostUtil.sendPost(
-                                    dataUrl,map,"utf-8",mIfJson);
-
-                            String postResult = PostUtil.parseJsonResult(response2,"result");
-                            if (! mCorrectResult.equals(postResult)){
-                                toastMegStep2.obj = postResult;
-                                toastMegStep2.what = CHANGE_TOAST;
-                                myHandler.sendMessage(toastMegStep2);
+                                //压缩图片
+                            String newFileStr = BitMapUtil.compressImage(mFileStr);
+                            String response1 = PostUtil.upload(uploadUrl,newFileStr);
+                            String uploadResult =  PostUtil.parseJsonResult(response1,"code");
+                            Log.d(Constants.TAG,"the result is " + response1);
+                            if ( ! mCorrectResult.equals(uploadResult) ){
+                                toastMegStep1.obj = "上传图片失败,请检查网络";
+                                toastMegStep1.what = CHANGE_TOAST;
+                                myHandler.sendMessage(toastMegStep1);
                                 break;
                             }
                             else{
-                                toastMegStep2.obj = "揽件信息上传成功，开始下载寄件码";
-                                toastMegStep2.what = CHANGE_MEDIUM;
-                                mDownloadStr = PostUtil.parseJsonResult(response2,"barcodepath");
-                                myHandler.sendMessage(toastMegStep2);
+                                toastMegStep1.obj = "上传图片成功";
+                                toastMegStep1.what = CHANGE_SUCCESS;
+                                mServerFileStr = PostUtil.parseJsonResult(response1,"serverPath");
+                                myHandler.sendMessage(toastMegStep1);
                             }
 
 
-                            //下载寄件码
-                            Message toastMegStep3 = Message.obtain();
-                            toastMegStep3.what = CHANGE_TOAST;
-                            if (mCorrectResult.equals(postResult)){
-                                if (isNetworkAvailable(VerifyActivity.this)){
-                                    String localFilePath =PostUtil.getDownloadFile2Cache
-                                            (mDownloadStr,"mailfigure");
-                                    if (!"".equals(localFilePath)){
-                                        mCertStr = localFilePath;
-                                        myHandler.sendEmptyMessage(CHANGE_SUCCESS);
-                                    }
-                                    else{
-                                        toastMegStep3.obj = "下载失败";
-                                        myHandler.sendMessage(toastMegStep3);
-                                    }
-
-                                }
-                                else {
-                                    toastMegStep3.obj = "网络未连接";
-                                    myHandler.sendMessage(toastMegStep3);
-                                }
-
-                            }
                             break;
                         }
 
@@ -366,7 +296,7 @@ public class VerifyActivity extends BaseActivity implements View.OnClickListener
      * 跳转到网证显示页面
      */
     protected void jumpToShow(){
-        Intent intent = new Intent(VerifyActivity.this,QRCodeActivity.class);
+        Intent intent = new Intent(PostFigureActivity.this,QRCodeActivity.class);
         intent.putExtra("certificate",mCertStr);
         intent.setFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
         startActivity(intent);
@@ -384,7 +314,7 @@ public class VerifyActivity extends BaseActivity implements View.OnClickListener
         if(mDialog != null && mDialog.isShowing())
             return ;
 
-        mDialog = new ProgressDialog(VerifyActivity.this) ;
+        mDialog = new ProgressDialog(PostFigureActivity.this) ;
         mDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);// 设置进度条的形式为圆形转动的进度条
         mDialog.setCancelable(true);// 设置是否可以通过点击Back键取消
         mDialog.setCanceledOnTouchOutside(false);// 设置在点击Dialog外是否取消Dialog进度条

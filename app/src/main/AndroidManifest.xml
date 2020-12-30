@@ -3,11 +3,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.nlscan.ocrtest">
 
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
-    <uses-permission android:name="android.permission.INTERNET" />
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -16,19 +11,22 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name="com.nlscan.ocrtest.EditInfoActivity"
-            android:windowSoftInputMode="adjustPan"/>
-        <activity android:name="com.nlscan.ocrtest.BaseActivity" />
-        <activity android:name="com.nlscan.ocrtest.QRCodeActivity" />
-        <activity android:name="com.nlscan.ocrtest.VerifyActivity" />
-        <activity
-            android:name="com.nlscan.ocrtest.MainActivity"
+        <activity android:name=".PostFigureActivity"
             android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".EditInfoActivity"
+            android:windowSoftInputMode="adjustPan" />
+        <activity android:name=".BaseActivity" />
+        <activity android:name=".QRCodeActivity" />
+        <activity android:name=".VerifyActivity" />
+        <activity
+            android:name=".MainActivity"
+            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar">
         </activity>
 
         <provider
@@ -41,6 +39,9 @@
                 android:resource="@xml/file_paths" />
         </provider>
     </application>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
 </manifest>

@@ -327,7 +327,7 @@ public class PostUtil
             DataOutputStream ds = new DataOutputStream(conn.getOutputStream());
             ds.writeBytes(Hyphens + boundary + end);
             ds.writeBytes("Content-Disposition: form-data; "
-                    + "name=\"upFile\";filename=\"" + fileName + "\"" + end);
+                    + "name=\"file\";filename=\"" + fileName + "\"" + end);
             ds.writeBytes(end);
             FileInputStream fStream = new FileInputStream(uploadFile);
             // 每次写入1024字节

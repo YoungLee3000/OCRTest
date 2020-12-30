@@ -2,7 +2,7 @@ package com.nlscan.ocrtest.util;
 
 public class Constants {
 
-    public static final String TAG = "mailSend";
+    public static final String TAG = "OCRTest";
 
     public static final String SE_NAME = "sender name";
 

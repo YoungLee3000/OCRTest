@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".PostFigureActivity">
+
+
+    <TextView
+        android:id="@+id/text_tips"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="拍摄照片或选择本地图库的图片上传,以识别其中的文字"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="10dp"
+        android:layout_alignParentTop="true"
+        />
+
+
+
+    <LinearLayout
+        android:id="@+id/ll_btn_row"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_below="@id/text_tips">
+        <Button
+            android:background="@color/lightblue"
+            android:id="@+id/bt_take_photo"
+            android:layout_weight="5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="拍照"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:textSize="22sp"
+            />
+
+
+        <Button
+            android:background="@color/lightblue"
+            android:id="@+id/bt_gen_cert"
+            android:layout_weight="5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="上传"
+            android:textSize="22sp"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"/>
+
+    </LinearLayout>
+
+
+
+    <ImageView
+        android:id="@+id/iv_picture"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginTop="8dp"
+        android:layout_below="@id/ll_btn_row"/>
+
+
+
+</RelativeLayout>

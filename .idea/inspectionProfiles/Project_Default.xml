@@ -29,6 +29,7 @@
     <inspection_tool class="AndroidDomInspection" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="AndroidElementNotAllowed" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AndroidLintAaptCrash" enabled="true" level="ERROR" enabled_by_default="true" />
+    <inspection_tool class="AndroidLintAcceptsUserCertificates" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="AndroidLintAccidentalOctal" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="AndroidLintAdapterViewChildren" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="AndroidLintAddJavascriptInterface" enabled="true" level="WARNING" enabled_by_default="true" />

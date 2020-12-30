@@ -6,7 +6,7 @@ android {
 
     defaultConfig {
         applicationId "com.nlscan.ocrtest"
-        minSdkVersion 16
+        minSdkVersion 24
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -26,9 +26,13 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.appcompat:appcompat:1.0.2'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
+    implementation 'com.squareup.okhttp3:okhttp:3.8.1'
+    implementation 'com.alibaba:fastjson:1.2.67'
+    implementation 'androidx.recyclerview:recyclerview:1.2.0-alpha01'
+    implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'], exclude: [])
 }
