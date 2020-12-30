@@ -7,6 +7,7 @@ import android.app.ProgressDialog;
 import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.database.Cursor;
@@ -76,6 +77,7 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
     private Uri mSmallUri; //裁剪图片的URI
 
     private String mFileStr = "";//裁剪后的图片路径
+    private boolean myCropExit = false;//判断裁剪应用是否存在
 
 
 
@@ -172,6 +174,7 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
 
 
+
         mTakePhoto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -229,7 +232,14 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
                             String uploadResult =  PostUtil.parseJsonResult(response1,"code");
                             Log.d(Constants.TAG,"the result is " + response1);
                             if ( ! mCorrectResult.equals(uploadResult) ){
-                                toastMegStep1.obj = "上传图片失败,请检查网络";
+                                if (uploadResult == null || "".equals(uploadResult)){
+                                    toastMegStep1.obj = "上传图片失败,请检查网络";
+                                }
+                                else{
+                                    toastMegStep1.obj = "无法识别文字,请重新拍照";
+                                }
+
+
                                 toastMegStep1.what = CHANGE_TOAST;
                                 myHandler.sendMessage(toastMegStep1);
                                 break;
@@ -256,6 +266,8 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
         });
 
     }
+
+
 
 
     /**
@@ -312,7 +324,9 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
     //绘制方框
     private void drawRectangles(Bitmap imageBitmap, int[][] keywordRects) {
         int left, top, right, bottom;
-        Bitmap mutableBitmap = imageBitmap.copy(Bitmap.Config.ARGB_8888, true);
+        Bitmap mutableBitmap = imageBitmap.copy(Bitmap.Config.ARGB_8888,true);//Bitmap.createBitmap(imageBitmap.getWidth(),imageBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+
+
         Canvas canvas = new Canvas(mutableBitmap);
         Paint paint = new Paint();
         paint.setColor(Color.RED);
@@ -322,7 +336,8 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
         Paint paint2 = new Paint();
         paint2.setColor(Color.RED);
         paint2.setStyle(Paint.Style.FILL);
-        paint2.setStrokeWidth(0.5f);
+        paint2.setStrokeWidth(1.0f);
+        paint2.setTextSize(36f);
 
         int size = keywordRects.length;
 
@@ -333,7 +348,7 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
             bottom = keywordRects[i][3];
 
             canvas.drawRect(left, top, right, bottom, paint);
-            canvas.drawText(""+(i+1),left-10,top+10,paint2);
+            canvas.drawText(""+(i+1),left-20,top+20,paint2);
         }
         mPicture.setImageBitmap(mutableBitmap);//img: 定义在xml布局中的ImagView控件
     }
@@ -489,6 +504,7 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
         Intent takePhotoIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);//打开相机的Intent
         if (takePhotoIntent.resolveActivity(getPackageManager()) != null) {//这句作用是如果没有相机则该应用不会闪退，要是不加这句则当系统没有相机应用的时候该应用会闪退
             File imageFile = createImageFile();//创建用来保存照片的文件
+            mFileStr =  imageFile.getPath();
 //            mImageUriFromFile = Uri.fromFile(imageFile);
 //            Log.i(Constants.TAG, "takePhoto: uriFromFile " + mImageUriFromFile);
             if (imageFile != null) {
@@ -512,6 +528,11 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
      * 裁剪图片
      */
     private void crop() {
+
+        Log.d(Constants.TAG,"进入裁剪");
+
+        String originFileStr = mFileStr;
+        Uri originUri = mImageUri;
 
         /*新建用于存剪裁后图片的文件，并转化为Uri*/
         File tempImageFile = createImageFile();
@@ -549,7 +570,14 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
         //给相关的包赋予uri的读写权限
         grantPermissions(this,intent,mSmallUri,true);
-        startActivityForResult(intent, REQ_CROP);
+        try {
+            startActivityForResult(intent, REQ_CROP);
+        } catch (Exception e) {
+            e.printStackTrace();
+            mFileStr = originFileStr;
+            mSmallUri = originUri;
+            showImageView();
+        }
     }
 
 
@@ -632,7 +660,16 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
             case TAKE_PHOTO:
                 if (resultCode != RESULT_OK) return;
 
-                crop();
+
+
+//                if (myCropExit){
+                    crop();
+//                }
+//                else{
+//                    Log.d(Constants.TAG,"no crop");
+//                    mSmallUri = mImageUri;
+//                    showImageView();
+//                }
                 break;
             case CHOOSE_PHOTO:
                 if (data == null) {//如果没有拍照或没有选取照片，则直接返回
@@ -644,30 +681,47 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
                     File tempFile = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT ?
                             new File(handleImageOnKitKat(data.getData())) : new File(handleImageBeforeKitKat(data.getData()));
 
+                    mFileStr =  tempFile.getPath();
+
                     mImageUri = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N ?
                             FileProvider.getUriForFile(this, FILE_PROVIDER_AUTHORITY, tempFile) :
                             Uri.fromFile(tempFile);
                 }
 //
-                crop();
+//                if (myCropExit){
+                    crop();
+//                }
+//                else{
+//                    Log.d(Constants.TAG,"no crop");
+//                    mSmallUri = mImageUri;
+//                    showImageView();
+//                }
+
                 break;
             case REQ_CROP:
-                try {
-                    if (mSmallUri != null) {
-                        gIfImage = true;
-                        Bitmap bitmap = BitmapFactory.decodeStream(
-                                getContentResolver().openInputStream(mSmallUri));
-                        mPicture.setImageBitmap(bitmap);
-                        mShowWords.setEnabled(false);
-                    } else {
-                        Log.i(Constants.TAG, "onActivityResult: Uri is null");
-                    }
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                }
+                showImageView();
                 break;
             default:
                 break;
+        }
+    }
+
+    //显示拍照完成或裁剪完成的图片
+    private void showImageView(){
+        try {
+            if (mSmallUri != null) {
+                gIfImage = true;
+                Bitmap bitmap = BitmapFactory.decodeStream(
+                        getContentResolver().openInputStream(mSmallUri));
+                mPicture.setImageBitmap(bitmap);
+                mShowWords.setEnabled(false);
+                mWords.setVisibility(View.GONE);
+                mShowWords.setText("显示文字");
+            } else {
+                Log.i(Constants.TAG, "onActivityResult: Uri is null");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
     }
 

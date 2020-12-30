@@ -212,7 +212,7 @@ public class BitMapUtil {
         options.inJustDecodeBounds = true;//只解析图片边沿，获取宽高
         BitmapFactory.decodeFile(filePath, options);
         // 计算缩放比
-        options.inSampleSize = calculateInSampleSize(options, 200, 200);
+        options.inSampleSize = calculateInSampleSize(options, 480, 480);
         // 完整解析图片返回bitmap
         options.inJustDecodeBounds = false;
         return BitmapFactory.decodeFile(filePath, options);
