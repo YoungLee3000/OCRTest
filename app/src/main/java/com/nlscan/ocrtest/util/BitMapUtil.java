@@ -164,7 +164,7 @@ public class BitMapUtil {
             }
             Bitmap newBm = compressImage(bm);
             FileOutputStream out = new FileOutputStream(outputFile);
-            newBm.compress(Bitmap.CompressFormat.JPEG, quality, out);
+            newBm.compress(Bitmap.CompressFormat.PNG, quality, out);
             out.close();
         } catch (Exception e) {
             e.printStackTrace();

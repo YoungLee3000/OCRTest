@@ -10,11 +10,13 @@ import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -51,6 +53,7 @@ import com.nlscan.ocrtest.util.PostUtil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.text.DateFormat;
@@ -178,7 +181,8 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
         mTakePhoto.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showBottomDialog();
+//                showBottomDialog();
+                takePhoto();
             }
         });
 
@@ -226,9 +230,8 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
                                     myHandler.sendMessage(toastMegStep1);
                                     break;
                             }
-                                //压缩图片
-                            String newFileStr = BitMapUtil.compressImage(mFileStr);
-                            String response1 = PostUtil.upload(uploadUrl,newFileStr);
+
+                            String response1 = PostUtil.upload(uploadUrl,mFileStr);
                             String uploadResult =  PostUtil.parseJsonResult(response1,"code");
                             Log.d(Constants.TAG,"the result is " + response1);
                             if ( ! mCorrectResult.equals(uploadResult) ){
@@ -269,6 +272,28 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
 
 
+    private void convertBitmap2Jpg(Bitmap bitmap, String newImgpath) {
+        //复制Bitmap 因为png可以为透明，jpg不支持透明，把透明底明变成白色
+        //主要是先创建一张白色图片，然后把原来的绘制至上去
+        Bitmap outB=bitmap.copy(Bitmap.Config.ARGB_8888,true);
+        Canvas canvas=new Canvas(outB);
+        canvas.drawColor(Color.WHITE);
+        canvas.drawBitmap(bitmap, 0, 0, null);
+        File file = new File(newImgpath);
+        try {
+            FileOutputStream out = new FileOutputStream(file);
+            if (outB.compress(Bitmap.CompressFormat.JPEG ,100, out)) {
+                out.flush();
+                out.close();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
     /**
      * 解析返回的json字符串
@@ -278,6 +303,10 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
         mShowWords.setEnabled(true);
 
+
+
+
+
         Bitmap bitmap = null;
         try {
             bitmap = BitmapFactory.decodeStream(
@@ -286,12 +315,22 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
             e.printStackTrace();
         }
 
+
+
         String data = PostUtil.parseJsonResult(objStr,"data");
         String item = PostUtil.parseJsonResult(data,"items");
+
+        float angle = 0.0f;
+        try {
+            angle = Float.parseFloat(PostUtil.parseJsonResult(data,"angle")) ;
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+
         JSONArray relArray = JSON.parseArray(item);
 
         if (relArray != null && relArray.size()>0){
-
+            if (bitmap == null) return;
             int size = relArray.size();
             String[] words = new String[size];
             int [][] rects = new int[size][4];
@@ -301,15 +340,15 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
                 words[i] = relObj.getString("itemstring");
                 JSONObject coord = (JSONObject) relObj.getJSONObject("itemcoord");
                 rects[i][0] = coord.getInteger("x");
-                rects[i][1] = coord.getInteger("y");
+                rects[i][1] = coord.getInteger("y") ;
                 rects[i][2] = rects[i][0] +  coord.getInteger("width");
-                rects[i][3] = rects[i][1] + coord.getInteger("height");
+                rects[i][3] = rects[i][1] + coord.getInteger("height") ;
 
                 mWords.append(""+(i+1) + ": " + words[i] + "\n");
 
             }
-            if (bitmap != null)
-                drawRectangles(bitmap,rects);
+
+            drawRectangles(bitmap,rects,angle);
 
 
         }
@@ -322,16 +361,47 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
 
     //绘制方框
-    private void drawRectangles(Bitmap imageBitmap, int[][] keywordRects) {
+    private void drawRectangles(Bitmap imageBitmap, int[][] keywordRects, float angle) {
         int left, top, right, bottom;
+
+//        //换白底
+//        convertBitmap2Jpg(imageBitmap,mFileStr);
+////        //获取旋转的图片
+//        Bitmap bMapRotate ;
+//        Matrix matrix = new Matrix();
+//        matrix.reset();
+//        matrix.setRotate(-angle)  ;
+//        bMapRotate = Bitmap.createBitmap(imageBitmap, 0, 0, imageBitmap.getWidth(),
+//                    imageBitmap.getHeight(), matrix, true);
+
+
         Bitmap mutableBitmap = imageBitmap.copy(Bitmap.Config.ARGB_8888,true);//Bitmap.createBitmap(imageBitmap.getWidth(),imageBitmap.getHeight(), Bitmap.Config.ARGB_8888);
 
 
-        Canvas canvas = new Canvas(mutableBitmap);
+
+
+        Bitmap bitmap = Bitmap.createBitmap(mutableBitmap.getWidth(),mutableBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(Color.WHITE);
+        canvas.drawBitmap(mutableBitmap,0,0,new Paint());
+//
+
+//        float tranAngle = (360 - angle);
+        float sinVal = (float) Math.sin(angle/180*Math.PI);
+        float cosVal = (float) Math.cos((90-angle)/180*Math.PI);
+        int height = mutableBitmap.getHeight();
+        int width = mutableBitmap.getWidth();
+        canvas.translate(height * sinVal  ,
+                width * cosVal);
+        canvas.rotate(angle);
+
+
+
+
         Paint paint = new Paint();
         paint.setColor(Color.RED);
         paint.setStyle(Paint.Style.STROKE);
-        paint.setStrokeWidth(1);
+        paint.setStrokeWidth(1f);
 
         Paint paint2 = new Paint();
         paint2.setColor(Color.RED);
@@ -339,19 +409,39 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
         paint2.setStrokeWidth(1.0f);
         paint2.setTextSize(36f);
 
+
         int size = keywordRects.length;
 
-        for (int i = 0; i < size; i++) {
-            left = keywordRects[i][0];
-            top = keywordRects[i][1];
-            right = keywordRects[i][2];
-            bottom = keywordRects[i][3];
 
+        Log.d(Constants.TAG,"the width " + mutableBitmap.getWidth()
+                + " the height " + mutableBitmap.getHeight());
+
+
+//        int shiftY = (int) (-mutableBitmap.getWidth()* Math.cos(-angle/180*Math.PI)  )  ;
+//
+//        int shiftX = (int) (mutableBitmap.getHeight()* Math.sin(-angle/180*Math.PI)  )  ;
+//        Log.d(Constants.TAG,"the shift is " + shiftY);
+
+
+
+        for (int i = 0; i < size; i++) {
+            left = keywordRects[i][0] ;
+            top = keywordRects[i][1]  ;
+            right = keywordRects[i][2] ;
+            bottom = keywordRects[i][3] ;
             canvas.drawRect(left, top, right, bottom, paint);
             canvas.drawText(""+(i+1),left-20,top+20,paint2);
         }
-        mPicture.setImageBitmap(mutableBitmap);//img: 定义在xml布局中的ImagView控件
+
+        canvas.save();
+        mPicture.setImageBitmap(bitmap);//img: 定义在xml布局中的ImagView控件
+//
+        mPicture.setBackgroundColor(Color.WHITE);
+        mShowWords.performClick();
+
     }
+
+
 
 
 
@@ -663,12 +753,12 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
 
 //                if (myCropExit){
-                    crop();
+//                    crop();
 //                }
 //                else{
 //                    Log.d(Constants.TAG,"no crop");
-//                    mSmallUri = mImageUri;
-//                    showImageView();
+                    mSmallUri = mImageUri;
+                    showImageView();
 //                }
                 break;
             case CHOOSE_PHOTO:
@@ -711,12 +801,15 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
         try {
             if (mSmallUri != null) {
                 gIfImage = true;
+                //压缩图片
+                BitMapUtil.compressImage(mFileStr);
                 Bitmap bitmap = BitmapFactory.decodeStream(
                         getContentResolver().openInputStream(mSmallUri));
                 mPicture.setImageBitmap(bitmap);
                 mShowWords.setEnabled(false);
                 mWords.setVisibility(View.GONE);
                 mShowWords.setText("显示文字");
+                mGenCert.performClick();
             } else {
                 Log.i(Constants.TAG, "onActivityResult: Uri is null");
             }
