@@ -272,27 +272,6 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
 
 
-    private void convertBitmap2Jpg(Bitmap bitmap, String newImgpath) {
-        //复制Bitmap 因为png可以为透明，jpg不支持透明，把透明底明变成白色
-        //主要是先创建一张白色图片，然后把原来的绘制至上去
-        Bitmap outB=bitmap.copy(Bitmap.Config.ARGB_8888,true);
-        Canvas canvas=new Canvas(outB);
-        canvas.drawColor(Color.WHITE);
-        canvas.drawBitmap(bitmap, 0, 0, null);
-        File file = new File(newImgpath);
-        try {
-            FileOutputStream out = new FileOutputStream(file);
-            if (outB.compress(Bitmap.CompressFormat.JPEG ,100, out)) {
-                out.flush();
-                out.close();
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
 
 
     /**
@@ -341,8 +320,8 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
                 JSONObject coord = (JSONObject) relObj.getJSONObject("itemcoord");
                 rects[i][0] = coord.getInteger("x");
                 rects[i][1] = coord.getInteger("y") ;
-                rects[i][2] = rects[i][0] +  coord.getInteger("width");
-                rects[i][3] = rects[i][1] + coord.getInteger("height") ;
+                rects[i][2] =  coord.getInteger("width");
+                rects[i][3] = coord.getInteger("height") ;
 
                 mWords.append(""+(i+1) + ": " + words[i] + "\n");
 
@@ -364,38 +343,32 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
     private void drawRectangles(Bitmap imageBitmap, int[][] keywordRects, float angle) {
         int left, top, right, bottom;
 
-//        //换白底
-//        convertBitmap2Jpg(imageBitmap,mFileStr);
-////        //获取旋转的图片
-//        Bitmap bMapRotate ;
-//        Matrix matrix = new Matrix();
-//        matrix.reset();
-//        matrix.setRotate(-angle)  ;
-//        bMapRotate = Bitmap.createBitmap(imageBitmap, 0, 0, imageBitmap.getWidth(),
-//                    imageBitmap.getHeight(), matrix, true);
 
 
         Bitmap mutableBitmap = imageBitmap.copy(Bitmap.Config.ARGB_8888,true);//Bitmap.createBitmap(imageBitmap.getWidth(),imageBitmap.getHeight(), Bitmap.Config.ARGB_8888);
 
-
-
-
-        Bitmap bitmap = Bitmap.createBitmap(mutableBitmap.getWidth(),mutableBitmap.getHeight(), Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        canvas.drawColor(Color.WHITE);
-        canvas.drawBitmap(mutableBitmap,0,0,new Paint());
-//
-
-//        float tranAngle = (360 - angle);
-        float sinVal = (float) Math.sin(angle/180*Math.PI);
-        float cosVal = (float) Math.cos((90-angle)/180*Math.PI);
-        int height = mutableBitmap.getHeight();
         int width = mutableBitmap.getWidth();
-        canvas.translate(height * sinVal  ,
-                width * cosVal);
-        canvas.rotate(angle);
+        int height = mutableBitmap.getHeight();
+//        Bitmap bitmap = Bitmap.createBitmap(width,height, Bitmap.Config.ARGB_8888);
 
 
+
+
+        //////获取旋转的图片
+        Bitmap bMapRotate ;
+        Matrix matrix = new Matrix();
+        matrix.reset();
+        matrix.setRotate(-angle)  ;
+        bMapRotate = Bitmap.createBitmap(mutableBitmap, 0, 0, imageBitmap.getWidth(),
+                    imageBitmap.getHeight(), matrix, true);
+        Canvas canvas = new Canvas(bMapRotate);
+//        canvas.drawColor(Color.WHITE);
+
+//        canvas.drawBitmap(bMapRotate,0,0,new Paint());
+
+
+
+//        rotationCanvas(canvas,width,height,angle,keywordRects);
 
 
         Paint paint = new Paint();
@@ -411,33 +384,128 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
 
         int size = keywordRects.length;
-
-
         Log.d(Constants.TAG,"the width " + mutableBitmap.getWidth()
                 + " the height " + mutableBitmap.getHeight());
-
-
-//        int shiftY = (int) (-mutableBitmap.getWidth()* Math.cos(-angle/180*Math.PI)  )  ;
-//
-//        int shiftX = (int) (mutableBitmap.getHeight()* Math.sin(-angle/180*Math.PI)  )  ;
-//        Log.d(Constants.TAG,"the shift is " + shiftY);
-
-
-
         for (int i = 0; i < size; i++) {
+
             left = keywordRects[i][0] ;
-            top = keywordRects[i][1]  ;
-            right = keywordRects[i][2] ;
-            bottom = keywordRects[i][3] ;
+            top = keywordRects[i][1] ;
+            right = left + keywordRects[i][2] ;
+            bottom = top + keywordRects[i][3] ;
             canvas.drawRect(left, top, right, bottom, paint);
             canvas.drawText(""+(i+1),left-20,top+20,paint2);
         }
 
-        canvas.save();
-        mPicture.setImageBitmap(bitmap);//img: 定义在xml布局中的ImagView控件
+
+
+//        canvas.save();
+        mPicture.setImageBitmap(bMapRotate);//img: 定义在xml布局中的ImagView控件
 //
+        mPicture.setRotation(angle);
         mPicture.setBackgroundColor(Color.WHITE);
         mShowWords.performClick();
+
+    }
+
+
+
+
+
+    //根据图片的选择角度旋转画布
+    private void rotationCanvas(Canvas canvas, int width,int height,
+                                float figAngle,int [][]keyWords){
+
+
+
+        double alpha = figAngle / 180 * Math.PI;
+
+        float cosVal = (float)Math.cos(figAngle/ 180 * Math.PI);
+        float sinVal = (float)Math.sin( figAngle / 180 * Math.PI);
+
+        float dx = -(-width/0.2f)*cosVal - (-height/2.0f) * sinVal  ;
+        float dy = -(-height/0.2f)*cosVal + (-width/2.0f) * sinVal ;
+
+
+
+//        canvas.translate(dx,dy);
+//        canvas.rotate(figAngle);
+
+        int size = keyWords.length;
+        for (int i = 0; i < size; i++) {
+
+//            先转回原始图片上的坐标
+//            int [] newOrigin = getOriginCoord(keyWords[i][0],keyWords[i][1],
+//                    width,height,figAngle) ;
+//            keyWords[i][0] = newOrigin[0] ;
+//            keyWords[i][1] = newOrigin[1]  ;
+
+            //再转为旋转坐标系后的坐标
+//            int [] rotateCoord = rotateAxis(dx,dy,keyWords[i][0],keyWords[i][1],
+//                                figAngle);
+//
+//            keyWords[i][0] = rotateCoord[0] ;
+//            keyWords[i][1] = rotateCoord[1]  ;
+
+        }
+
+
+
+
+    }
+
+
+    //获取旋转前的图片的坐标
+    private int [] getOriginCoord(int x,int y,int width,int height,float angle){
+        int [] origin = new int[2];
+
+        double cosVal = Math.cos(-angle/ 180 * Math.PI);
+        double sinVal = Math.sin( -angle / 180 * Math.PI);
+
+        //平移->旋转->平移
+        //切换坐标系后的原始O点坐标
+        double newOX =   (-width / 2.0 ) ;
+        double newOY = (-height /2.0 );
+
+        double xFig =  -width / 2.0 + x;
+        double yFig = -height / 2.0 + y;
+
+//        double dist = Math.sqrt(xFig*xFig + yFig*yFig);
+
+        origin[0] =  (int)Math.round( xFig * cosVal - yFig * sinVal
+                 - newOX  );
+        origin[1] = (int)Math.round( yFig * cosVal + xFig * sinVal
+                 - newOY);
+
+
+
+        return origin;
+
+
+
+    }
+
+
+
+
+
+    //旋转画布后相应的坐标变化
+    private int[] rotateAxis(float dx, float dy, int x,int y, float angle){
+
+        int [] origin = new int[2];
+
+        //该点与图片中心的距离
+        double cosVal = Math.cos(angle/180 * Math.PI);
+        double sinVal = Math.sin(angle/180 * Math.PI);
+
+
+
+        origin[0] = (int) Math.round ((x - dx) * cosVal + (y - dy)*sinVal) ;
+        origin[1] = (int) Math.round (-(x - dx) * sinVal + (y - dy)*cosVal) ;
+
+        return origin;
+
+
+
 
     }
 
