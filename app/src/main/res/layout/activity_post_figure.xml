@@ -21,25 +21,49 @@
 
 
 
+
+
+
+
+    <LinearLayout
+        android:id="@+id/ll_fig_word"
+        android:layout_below="@id/text_tips"
+        android:layout_above="@id/ll_btn_row"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+
+
+
+        <ImageView
+            android:id="@+id/iv_picture"
+            android:layout_width="match_parent"
+            android:layout_weight="1"
+            android:layout_height="0dp"
+            android:scaleType="fitCenter"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/text_words"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"/>
+
+
+
+    </LinearLayout>
+
+
     <LinearLayout
         android:id="@+id/ll_btn_row"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_below="@id/text_tips">
-        <Button
-            android:background="@color/lightblue"
-            android:id="@+id/bt_take_photo"
-            android:layout_weight="5"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="拍照"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginLeft="5dp"
-            android:layout_marginRight="5dp"
-            android:textSize="18sp"
-            />
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal">
+
 
 
         <Button
@@ -71,35 +95,20 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"/>
 
-    </LinearLayout>
-
-
-
-    <LinearLayout
-        android:id="@+id/ll_fig_word"
-        android:layout_below="@id/ll_btn_row"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-
-
-
-        <ImageView
-            android:id="@+id/iv_picture"
-            android:layout_width="match_parent"
-            android:layout_weight="1"
-            android:layout_height="0dp"
-            android:scaleType="fitCenter"
+        <Button
+            android:background="@color/lightblue"
+            android:id="@+id/bt_take_photo"
+            android:layout_weight="5"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="拍照"
+            android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp"
-            android:layout_marginTop="8dp" />
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="5dp"
+            android:textSize="18sp"
+            />
 
-        <TextView
-            android:id="@+id/text_words"
-            android:visibility="gone"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"/>
 
 
 
