@@ -37,6 +37,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -58,6 +59,7 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -69,6 +71,7 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
     //界面信息
     private Button mTakePhoto, mGenCert,mShowWords;
     private TextView  mTVTip,mWords;
+    private ScrollView scrollView;
     private ImageView mPicture;
     private static final String PERMISSION_WRITE_STORAGE = Manifest.permission.WRITE_EXTERNAL_STORAGE;
     private static final int REQUEST_PERMISSION_CODE = 267;
@@ -174,6 +177,7 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
         mShowWords = (Button)findViewById(R.id.bt_show_word);
         mTVTip = (TextView) findViewById(R.id.text_tips);
         mWords = (TextView) findViewById(R.id.text_words);
+        scrollView = (ScrollView) findViewById(R.id.sc_text_words);
 
 
 
@@ -194,10 +198,12 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
                 if (ifShow){
                     mShowWords.setText("关闭文字");
                     mWords.setVisibility(View.VISIBLE);
+                    scrollView.setVisibility(View.VISIBLE);
                 }
                 else{
                     mShowWords.setText("显示文字");
                     mWords.setVisibility(View.GONE);
+                    scrollView.setVisibility(View.GONE);
                 }
 
 
@@ -349,27 +355,25 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
         int width = mutableBitmap.getWidth();
         int height = mutableBitmap.getHeight();
-//        Bitmap bitmap = Bitmap.createBitmap(width,height, Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(width,height, Bitmap.Config.ARGB_8888);
 
 
 
 
         //////获取旋转的图片
-        Bitmap bMapRotate ;
-        Matrix matrix = new Matrix();
-        matrix.reset();
-        matrix.setRotate(-angle)  ;
-        bMapRotate = Bitmap.createBitmap(mutableBitmap, 0, 0, imageBitmap.getWidth(),
-                    imageBitmap.getHeight(), matrix, true);
-        Canvas canvas = new Canvas(bMapRotate);
-//        canvas.drawColor(Color.WHITE);
+//        Bitmap bMapRotate ;
+//        Matrix matrix = new Matrix();
+//        matrix.reset();
+//        matrix.setRotate(-angle)  ;
+//        bMapRotate = Bitmap.createBitmap(mutableBitmap, 0, 0, imageBitmap.getWidth(),
+//                    imageBitmap.getHeight(), matrix, true);
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawColor(Color.WHITE);
 
-//        canvas.drawBitmap(bMapRotate,0,0,new Paint());
+        canvas.drawBitmap(mutableBitmap,0,0,new Paint());
 
 
-
-//        rotationCanvas(canvas,width,height,angle,keywordRects);
-
+        rotationCanvas(canvas,width,height,angle,keywordRects);
 
         Paint paint = new Paint();
         paint.setColor(Color.RED);
@@ -399,9 +403,9 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
 
 //        canvas.save();
-        mPicture.setImageBitmap(bMapRotate);//img: 定义在xml布局中的ImagView控件
+        mPicture.setImageBitmap(bitmap);//img: 定义在xml布局中的ImagView控件
 //
-        mPicture.setRotation(angle);
+//        mPicture.setRotation(angle);
         mPicture.setBackgroundColor(Color.WHITE);
         mShowWords.performClick();
 
@@ -416,7 +420,6 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
                                 float figAngle,int [][]keyWords){
 
 
-
         double alpha = figAngle / 180 * Math.PI;
 
         float cosVal = (float)Math.cos(figAngle/ 180 * Math.PI);
@@ -426,59 +429,23 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
         float dy = -(-height/0.2f)*cosVal + (-width/2.0f) * sinVal ;
 
 
+        canvas.translate(dx,dy);
+        canvas.rotate(figAngle);
 
-//        canvas.translate(dx,dy);
-//        canvas.rotate(figAngle);
 
         int size = keyWords.length;
         for (int i = 0; i < size; i++) {
 
-//            先转回原始图片上的坐标
-//            int [] newOrigin = getOriginCoord(keyWords[i][0],keyWords[i][1],
-//                    width,height,figAngle) ;
-//            keyWords[i][0] = newOrigin[0] ;
-//            keyWords[i][1] = newOrigin[1]  ;
 
-            //再转为旋转坐标系后的坐标
-//            int [] rotateCoord = rotateAxis(dx,dy,keyWords[i][0],keyWords[i][1],
-//                                figAngle);
-//
-//            keyWords[i][0] = rotateCoord[0] ;
-//            keyWords[i][1] = rotateCoord[1]  ;
+//          //再转为旋转坐标系后的坐标
+            int [] rotateCoord = rotateAxis(dx,dy,keyWords[i][0],keyWords[i][1],
+                                figAngle);
+
+            keyWords[i][0] = rotateCoord[0] ;
+            keyWords[i][1] = rotateCoord[1]  ;
 
         }
 
-
-
-
-    }
-
-
-    //获取旋转前的图片的坐标
-    private int [] getOriginCoord(int x,int y,int width,int height,float angle){
-        int [] origin = new int[2];
-
-        double cosVal = Math.cos(-angle/ 180 * Math.PI);
-        double sinVal = Math.sin( -angle / 180 * Math.PI);
-
-        //平移->旋转->平移
-        //切换坐标系后的原始O点坐标
-        double newOX =   (-width / 2.0 ) ;
-        double newOY = (-height /2.0 );
-
-        double xFig =  -width / 2.0 + x;
-        double yFig = -height / 2.0 + y;
-
-//        double dist = Math.sqrt(xFig*xFig + yFig*yFig);
-
-        origin[0] =  (int)Math.round( xFig * cosVal - yFig * sinVal
-                 - newOX  );
-        origin[1] = (int)Math.round( yFig * cosVal + xFig * sinVal
-                 - newOY);
-
-
-
-        return origin;
 
 
 
@@ -498,7 +465,6 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
         double sinVal = Math.sin(angle/180 * Math.PI);
 
 
-
         origin[0] = (int) Math.round ((x - dx) * cosVal + (y - dy)*sinVal) ;
         origin[1] = (int) Math.round (-(x - dx) * sinVal + (y - dy)*cosVal) ;
 
@@ -506,8 +472,8 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
 
 
 
-
     }
+
 
 
 
@@ -847,12 +813,12 @@ public class PostFigureActivity extends BaseActivity implements View.OnClickList
                 }
 //
 //                if (myCropExit){
-                    crop();
+//                    crop();
 //                }
 //                else{
 //                    Log.d(Constants.TAG,"no crop");
-//                    mSmallUri = mImageUri;
-//                    showImageView();
+                    mSmallUri = mImageUri;
+                    showImageView();
 //                }
 
                 break;
